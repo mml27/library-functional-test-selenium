@@ -1,0 +1,76 @@
+name: build-test
+
+on:
+  push:
+    tags: [v*]
+    branches: [master]
+    paths: ['src/**']
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize]
+    paths: ['src/**']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  JDK_VERSION: '17'
+  JDK_DIST: 'temurin'
+
+jobs:
+  build-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        jdk-version: ['11', '17', '21']
+        jdk-dist: ['temurin', 'corretto']
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout-repo
+        uses: actions/checkout@v4
+      - name: setup-java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.jdk-version }}
+          distribution: ${{ matrix.jdk-dist }}
+          cache: maven
+      - name: build-test
+        run: mvn clean verify
+  scan-code:
+    needs: [build-test]
+    env:
+      SONAR_ARGS: -Dsonar.projectName=${{ vars.MAT_SONAR_PK }} -Dsonar.projectKey=${{ vars.MAT_SONAR_PK }} -Dsonar.host.url=${{ vars.MAT_SONAR_URL }} -Dsonar.login=${{ secrets.MAT_SONAR_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout-repo
+        uses: actions/checkout@v4
+      - name: setup-java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JDK_VERSION }}
+          distribution: ${{ env.JDK_DIST }}
+          cache: maven
+      - name: scan-code
+        run: mvn clean verify sonar:sonar ${{ env.SONAR_ARGS }}
+  deploy:
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    needs: [scan-code]
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout-repo
+        uses: actions/checkout@v4
+      - name: setup-java
+        uses: actions/setup-java@v4
+        with:
+          java-version: $JDK_VERSION
+          distribution: $JDK_DIST
+          cache: maven
+          server-id: nexus
+          server-username: MVN_USERNAME
+          server-password: MVN_PASSWORD
+      - name: deploy-target
+        run: mvn clean deploy
+        env:
+          MVN_USERNAME: ${{ secrets.MVN_NEXUS_USERNAME }}
+          MVN_PASSWORD: ${{ secrets.MVN_NEXUS_PASSWORD }}
