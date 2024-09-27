@@ -1,0 +1,13 @@
+{
+  "theme": "STANDARD",
+  "encoding": "utf-8",
+  "protocol": "HTTPS",
+  "timelineEnabled": true,
+  "offlineMode": true,
+  "thumbnailForBase64": true,
+  "documentTitle": "MAT Functional Tests",
+  "reportName": "MAT Functional Tests",
+  "timeStampFormat": "MMM dd, yyyy HH:mm:ss a",
+  "js": "document.getElementsByClassName('logo')[0].style.backgroundImage = 'url(logo.png)'; document.querySelector(\"link[rel='shortcut icon']\").href = 'logo.png';",
+  "css": "body { background-color:#8a8a8a24; } .badge-primary { background-color: #BF0000; } .vheader { background-color: #333; } .side-nav-menu { background-color: #333; }"
+}

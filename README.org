@@ -1,0 +1,154 @@
+#+AUTHOR: DevSecOps CTTI
+#+TITLE: MAT Selenium :: ~llibreria~
+
+
+* Requisits
+
+- OpenJDK >= 11
+- Maven > 3
+
+
+* Uso
+
+Aquesta es la llibreria oficial del MAT per utilitzar i interactuar amb la plantilla [[http://git.ctti-eks.aws/devsecops/functional-test][functional-test]]
+
+#+begin_src sh
+<dependency>
+  <groupId>cat.gencat.mat</groupId>
+  <artifactId>mat-selenium</artifactId>
+  <version>...</version>
+</dependency>
+#+end_src
+
+#+begin_quote sh
+En el config.parameters de la plantilla [[http://git.ctti-eks.aws/devsecops/functional-test][functional-test]], no serà necessari manar ~ambit~ i ~maintainer~. És suficient amb ~app~ i ~app_url~.
+#+end_quote
+
+A més, per disposar de funcionalitat extra i/o personalitzar el comportament de l'execució, tenim aquests parametres extres:
+
+- ~headless~ :: Controla si els navegadors s'inicien. ~true~ per defecte. Només s'accepta via una propietat de la JVM (i.e. ~-Dheadless=[true|false]~).
+- ~selenium_firefox_driver~ :: /Path/ al binari del webdriver de Firefox (/Gecko/). Acceptat via env. var. (i.e. ~MAT_TF_SELENIUM_FIREFOX_DRIVER=...~) o propietat de la JVM (i.e. ~-Dselenium_firefox_driver=...~).
+- ~influxdb_url~ :: url de InfluxDB.
+- ~influxdb_token~ :: token de InfluxDB.
+- ~influxdb_bucket~ ::  bucket de InfluxDB on es carreguen les dades al final de l'execució [selenium].
+- ~influxdb_company~ :: organització de InfluxDB.
+- ~environment~ :: entorn on es realitzen les proves.
+- ~build_id~ :: de Jenkins.
+- ~job_name~ :: de Jenkins.
+- ~jira_pk~ :: ID del projecte de Jira associat al projecte de testing a executar.
+- ~jira_issue~ :: ID de la issue de Jira (Test Plan) la qual representa el projecte de testing, on s'asociaran els casos de prova implementats.
+
+
+* Classes
+- *ConfigParameters.java*: analitza i guarda els paràmetres de configuració (la url de l'aplicació, les dades de InfluxDB...).
+- *BaseTest.java*: conté mètodes comuns (inciar el driver, tancar el driver...) vàlids per a qualsevol projecte que s'executaran abans de cada classe, abans de cada mètode, en iniciar la suite, etc.
+- *Utils.java*: conté mètodes que poden ser necessaris en qualsevol projecte com accedir a l'aplicació, maximitzar la finestra, scroll, verificar un element...
+- *BrowserOptions.java*: conté totes característiques pròpies per a cada navegador.
+- *ExtentManager.java*: aquesta classe defineix els mètodes els mètodes necessaris per a bolcar els resultats al document .html.
+- *ResultSender.java* i *ExecutionListener.java*: aquestes classes són les que gestionen la connexió amb InfluxDB.
+
+* Instal·lació
+
+#+begin_src sh
+mvn clean install
+#+end_src
+
+* Exemple d'execució en local
+
+1.Revisar el nom de la versió que serà descarregada posteriorment en el teu sistema
+
+#+begin_src sh
+<dependency>
+  <groupId>cat.gencat.mat</groupId>
+  <artifactId>mat-selenium</artifactId>
+  <version>...</version>
+</dependency>
+#+end_src
+
+
+2.Descarregar la llibreria
+
+#+begin_src sh
+mvn clean install
+#+end_src
+
+
+3.Obrir la plantilla de [[http://git.ctti-eks.aws/devsecops/functional-test][functional-test]] i actualitzar la versió de la llibreria
+
+#+begin_src sh
+<dependency>
+  <groupId>cat.gencat.mat</groupId>
+  <artifactId>mat-selenium</artifactId>
+  <version>...</version>
+</dependency>
+#+end_src
+
+
+4.Carregar la llibreria al projecte
+
+#+begin_src sh
+mvn dependency:resolve
+#+end_src
+
+5.Execució en local (executant les consultes i actualitzacions de InlfuxDB)
+
+#+begin_src sh
+mvn clean test -Dselenium_url="..." -Dapp_url="[url aplicació a testear]" 
+-Dinfluxdb_url="..." 
+-Dinfluxdb_token="..." 
+-Dinfluxdb_bucket="selenium" -Dinfluxdb_company="..."
+-Denvironment="..." -Dbuild_id="..." -Djob_name="..." 
+-Djira_pk="..." -Djira_issue="..." 
+#+end_src
+
+6.Execució en local (sense connexió amb InlfuxDB)
+
+#+begin_src sh
+mvn clean test -Dselenium_url="..." -Dapp_url="[url aplicació a testear]" 
+-Denvironment="..." -Dbuild_id="..." -Djob_name="..." 
+-Djira_pk="..." -Djira_issue="..." 
+#+end_src
+
+* Actualitzar la llibreria en el repositori de Nexus
+
+1.Revisa la versió en el pom.xml
+
+#+begin_src sh
+<groupId>cat.gencat.mat</groupId>
+<artifactId>mat-selenium</artifactId>
+<version>...</version>
+#+end_src
+
+2.Revisa la url del repositori en el pom.xml
+
+#+begin_src sh
+<distributionManagement>
+    <repository>
+      <id>nexus</id>
+      <url>https://mat.qualitat.solucions.gencat.cat/nexus/repository/maven-releases/</url>
+    </repository>
+</distributionManagement>
+#+end_src
+
+3.Configura les credencials de Nexus en "C:\Users\.m2\settings.xml"
+
+#+begin_src sh
+<settings>
+    <servers>
+        <server>
+            <id>nexus</id>
+            <username>...</username>
+            <password>...</password>
+        </server>
+    </servers>
+</settings>
+#+end_src
+
+4.Executa mvn per a pujar la llibreria a Nexus.
+
+#+begin_src sh
+ mvn clean deploy
+#+end_src
+
+
+
